@@ -1,0 +1,60 @@
+<html>
+<head>
+<meta charset="utf-8" />
+<style type="text/css">
+.value { font-weight: bold; }
+.dots { color: #bebdbd; }
+.type { color: #BBBBBB; }
+.pos { color: #CCCCCC; }
+.sourceText { color: #BBBBBB; }
+.posText {
+	color: #BBBBBB;
+	text-decoration: underline; font-weight: bold;
+}
+.null {
+	color: #FF0000;
+	font-weight: bold;
+	font-style: italic;
+}
+</style>
+</head>
+
+<body><pre>
+[ASTPrinter] -------------------------------- line:col  line:col
+
+<span class="dots"></span>Program &rarr;                                                   <span class="pos">1:5  12:8    </span><span class="sourceText">var </span><span class="posText">global:float;</span><span class="sourceText"> ... </span><span class="posText">print 1</span><span class="sourceText">;	</span>
+<span class="dots">.  </span>definitions  <span class="type">List&lt;Definition&gt;</span> = 
+<span class="dots">.  .  </span>VarDefinition &rarr;                                       <span class="pos">1:5  1:16    </span><span class="sourceText">var </span><span class="posText">global:float</span><span class="sourceText">;</span>
+<span class="dots">.  .  |  </span><span class="value">RealType</span> &rarr;                                         <span class="pos">1:12  1:16   </span><span class="sourceText">var global:</span><span class="posText">float</span><span class="sourceText">;</span>
+<span class="dots">.  .  |  </span>"<span class="value">global</span>"  
+<span class="dots">.  .  |  </span><span class="value">0</span>  <span class="type">int</span>
+<span class="dots">.  .  </span>StructDef &rarr;                                           <span class="pos">3:8  5:13    </span><span class="sourceText">struct </span><span class="posText">Persona {</span><span class="sourceText"> ... </span><span class="posText">sueldo:float</span><span class="sourceText">;  </span>
+<span class="dots">.  .  |  </span>"<span class="value">Persona</span>"  
+<span class="dots">.  .  |  </span>records  <span class="type">List&lt;Definition&gt;</span> = 
+<span class="dots">.  .  |  .  </span>RecordDef &rarr;                                     <span class="pos">4:2  4:13    </span><span class="sourceText"></span><span class="posText">inicial:char</span><span class="sourceText">;</span>
+<span class="dots">.  .  |  .  |  </span>"<span class="value">inicial</span>"  
+<span class="dots">.  .  |  .  |  </span><span class="value">CharType</span> &rarr;                                   <span class="pos">4:10  4:13   </span><span class="sourceText">inicial:</span><span class="posText">char</span><span class="sourceText">;</span>
+<span class="dots">.  .  |  .  |  </span><span class="value">0</span>  <span class="type">int</span>
+<span class="dots">.  .  |  .  </span>RecordDef &rarr;                                     <span class="pos">5:2  5:13    </span><span class="sourceText"></span><span class="posText">sueldo:float</span><span class="sourceText">;  </span>
+<span class="dots">.  .  |  .  |  </span>"<span class="value">sueldo</span>"  
+<span class="dots">.  .  |  .  |  </span><span class="value">RealType</span> &rarr;                                   <span class="pos">5:9  5:13    </span><span class="sourceText">sueldo:</span><span class="posText">float</span><span class="sourceText">;  </span>
+<span class="dots">.  .  |  .  |  </span><span class="value">1</span>  <span class="type">int</span>
+<span class="dots">.  .  </span>FunctionDef &rarr;                                         <span class="pos">8:1  12:8    </span><span class="sourceText"></span><span class="posText">main() {</span><span class="sourceText"> ... </span><span class="posText">print 1</span><span class="sourceText">;	</span>
+<span class="dots">.  .  |  </span>"<span class="value">main</span>"  
+<span class="dots">.  .  |  </span>FunctionType &rarr;                                     <span class="pos"><span class="null">null</span>  <span class="null">null</span>   </span>
+<span class="dots">.  .  |  .  </span><span class="null">null</span>  retType:<span class="type">Type</span>
+<span class="dots">.  .  |  .  </span>paramDefs  <span class="type">List&lt;Definition&gt;</span> = 
+<span class="dots">.  .  |  </span>localDefs  <span class="type">List&lt;Definition&gt;</span> = 
+<span class="dots">.  .  |  .  </span>VarDefinition &rarr;                                 <span class="pos">9:6  9:17    </span><span class="sourceText">var </span><span class="posText">jose:Persona</span><span class="sourceText">;</span>
+<span class="dots">.  .  |  .  |  </span><span class="value">StructType</span> &rarr;                                 <span class="pos">9:11  9:17   </span><span class="sourceText">var jose:</span><span class="posText">Persona</span><span class="sourceText">;</span>
+<span class="dots">.  .  |  .  |  </span>"<span class="value">jose</span>"  
+<span class="dots">.  .  |  .  |  </span><span class="value">-5</span>  <span class="type">int</span>
+<span class="dots">.  .  |  </span>stats  <span class="type">List&lt;Sentence&gt;</span> = 
+<span class="dots">.  .  |  .  </span>Print &rarr;                                         <span class="pos">12:8  12:8   </span><span class="sourceText">print </span><span class="posText">1</span><span class="sourceText">;	</span>
+<span class="dots">.  .  |  .  |  </span>IntConstant &rarr;                                <span class="pos">12:8  12:8   </span><span class="sourceText">print </span><span class="posText">1</span><span class="sourceText">;	</span>
+<span class="dots">.  .  |  .  |  .  </span><span class="value">1</span>  <span class="type">int</span>
+
+[ASTPrinter] --------------------------------
+</pre>
+</body>
+</html>

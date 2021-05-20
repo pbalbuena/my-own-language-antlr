@@ -1,0 +1,19 @@
+#source "source2.txt"
+call main
+halt
+
+#line 1
+#GLOBAL global:float
+#FUNC main
+
+#line 12
+main:
+
+#line 9
+#LOCAL jose:
+enter 5
+
+#line 12
+push 1
+outi
+ret 0,5,0

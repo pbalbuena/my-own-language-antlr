@@ -1,0 +1,13 @@
+var global:float;
+
+struct Persona {
+	inicial:char;
+	sueldo:float;  
+};
+
+main() {
+	var jose:Persona;
+
+	
+	print 1;	
+}
