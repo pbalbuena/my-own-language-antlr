@@ -15,6 +15,7 @@ import ast.Arithmetic;
 import ast.Assignment;
 import ast.CallFunction;
 import ast.CallProcedure;
+import ast.Cast;
 import ast.CharConstant;
 import ast.Comparison;
 import ast.Definition;
@@ -26,6 +27,7 @@ import ast.IfElse;
 import ast.Indexing;
 import ast.IntConstant;
 import ast.Logic;
+import ast.Not;
 import ast.Position;
 import ast.Print;
 import ast.Program;
@@ -35,6 +37,7 @@ import ast.RecordDef;
 import ast.Return;
 import ast.Sentence;
 import ast.StructDef;
+import ast.StructType;
 import ast.Type;
 import ast.UnaryMinus;
 import ast.VarDefinition;
@@ -51,21 +54,21 @@ public class CodeSelection extends DefaultVisitor {
 	private Map<String, String> instruccion = new HashMap<String, String>();
 
 	private int labelCounter = 0;
-	
+
 	public CodeSelection(Writer writer, String sourceFile) {
 		this.writer = new PrintWriter(writer);
 		this.sourceFile = sourceFile;
 
-		//arithmetic
+		// arithmetic
 		instruccion.put("+", "add");
 		instruccion.put("-", "sub");
 		instruccion.put("*", "mul");
 		instruccion.put("/", "div");
-		//logic
+		// logic
 		instruccion.put("&&", "and");
 		instruccion.put("||", "or");
 		instruccion.put("!", "not");
-		//comparison
+		// comparison
 		instruccion.put(">", "gt");
 		instruccion.put("<", "lt");
 		instruccion.put(">=", "ge");
@@ -91,12 +94,10 @@ public class CodeSelection extends DefaultVisitor {
 
 		out("call main");
 		out("halt");
-		
+
 		if (node.getDefinitions() != null)
 			for (Definition child : node.getDefinitions())
 				child.accept(this, param);
-
-		
 
 		return null;
 	}
@@ -109,8 +110,8 @@ public class CodeSelection extends DefaultVisitor {
 		out("#FUNC " + node.getIdent());
 		line(node);
 
-		out(node.getIdent()+":");
-		
+		out(node.getIdent() + ":");
+
 		if (node.getTipo() != null)
 			node.getTipo().accept(this, param);
 
@@ -120,23 +121,22 @@ public class CodeSelection extends DefaultVisitor {
 
 		// despues de visitar las variables locales hacemos un enter del espacio
 		// requerido
-		if(node.getLocalBytes() > 0 ) {
+		if (node.getLocalBytes() > 0) {
 			out("enter " + node.getLocalBytes());
 		}
-		
-		
+
 		if (node.getStats() != null)
 			for (Sentence child : node.getStats())
 				child.accept(this, param);
 
-		//si no tiene tipo de retorno la funcion
+		// si no tiene tipo de retorno la funcion
 		FunctionType ftype = (FunctionType) node.getTipo();
-		if(ftype.getRetType() == null) {
+		if (ftype.getRetType() == null) {
 			int locales = node.getLocalBytes();
 			int parametros = ftype.getSize();
-			out("ret 0,"+locales+","+parametros);
+			out("ret 0," + locales + "," + parametros);
 		}
-		
+
 		return null;
 	}
 
@@ -150,8 +150,8 @@ public class CodeSelection extends DefaultVisitor {
 
 		if (node.getType() != null)
 			node.getType().accept(this, param);
-		
-		switch(node.getAmbito()) {
+
+		switch (node.getAmbito()) {
 		case 0:
 			out("#GLOBAL " + node.getName() + ":" + node.getType().getMAPLName());
 			break;
@@ -164,17 +164,20 @@ public class CodeSelection extends DefaultVisitor {
 		}
 		return null;
 	}
-	
+
 //	class StructDef { String name;  Type tipo;  List<Definition> records; }
 	public Object visit(StructDef node, Object param) {
 
 		// super.visit(node, param);
 
 		line(node);
-		out("#TYPE " + node.getName() + ": { \n" 
-				
-				+"}");
-		
+		out("#TYPE " + node.getName() + ": { \n");
+		for (Definition r : node.getRecords()) {
+			RecordDef rdef = (RecordDef) r;
+			out(rdef.getName() + ":" + rdef.getTipo().getMAPLName() + "\n");
+		}
+		out("}");
+
 		if (node.getRecords() != null)
 			for (Definition child : node.getRecords())
 				child.accept(this, param);
@@ -182,7 +185,7 @@ public class CodeSelection extends DefaultVisitor {
 		return null;
 	}
 
-	//	class RecordDef { String name;  Type tipo; }
+	// class RecordDef { String name; Type tipo; }
 	public Object visit(RecordDef node, Object param) {
 
 		// super.visit(node, param);
@@ -204,11 +207,31 @@ public class CodeSelection extends DefaultVisitor {
 		if (node.getExpression() != null)
 			node.getExpression().accept(this, CodeFunction.VALUE);
 
-		out("out", node.getExpression().getType());
+		// System.out.println(node.getTipoPrint());
+
+		if (node.getExpression() != null) {
+			out("out", node.getExpression().getType());
+		}
+		
+		switch (node.getTipoPrint()) {
+		case 1: {// print
+			break;
+		}
+		case 2: {// printsp
+			out("pushb 32"); // ascii for blank space
+			out("outb");
+			break;
+		}
+		case 3: { // println
+			out("pushb 10"); // ascii for \n
+			out("outb");
+			break;
+		}
+		}
 
 		return null;
 	}
-	
+
 //	class Read { Expression expression; }
 	public Object visit(Read node, Object param) {
 
@@ -218,24 +241,27 @@ public class CodeSelection extends DefaultVisitor {
 		if (node.getExpression() != null)
 			node.getExpression().accept(this, CodeFunction.ADDRESS);
 
-		out("in"+node.getExpression().getType().getSuffix());
-		out("store"+node.getExpression().getType().getSuffix());
-		
+		out("in" + node.getExpression().getType().getSuffix());
+		out("store" + node.getExpression().getType().getSuffix());
+
 		return null;
 	}
-	
+
 //	class Return { Expression expr; }
 	public Object visit(Return node, Object param) {
 
 		// super.visit(node, param);
 
-		line(node);
 		
-		out("#RET " + node.getExpr().getType().getMAPLName());
-		
+
+		if (node.getExpr() != null) {
+			line(node);
+			out("#RET " + node.getExpr().getType().getMAPLName());
+		}
+
 		if (node.getExpr() != null) {
 			node.getExpr().accept(this, CodeFunction.VALUE);
-			
+
 			int funcion;
 			int locales;
 			int params;
@@ -243,70 +269,70 @@ public class CodeSelection extends DefaultVisitor {
 			locales = node.getFunctionDefinition().getLocalBytes();
 			FunctionType ftype = (FunctionType) node.getFunctionDefinition().getTipo();
 			params = ftype.getSize();
-			out("ret " + funcion + ","+locales+","+params);		
+			out("ret " + funcion + "," + locales + "," + params);
 		}
 		return null;
-	}	
-	
+	}
+
 //	class IfElse { Expression condition;  List<Sentence> ifSentences;  List<Sentence> elseSentences; }
 	public Object visit(IfElse node, Object param) {
 
 		// super.visit(node, param);
 		line(node);
-		
-		//para que no se mezcle con los otros labels
+
+		// para que no se mezcle con los otros labels
 		int localLabel = labelCounter++;
-		
+
 		if (node.getCondition() != null)
 			node.getCondition().accept(this, CodeFunction.VALUE);
-		
-		//no es necesario poner etiqueta al if ya que nunca volvemos a él
-		//out("if"+ labelCounter + ":"); 
-		
-		out("jz else"+localLabel);
+
+		// no es necesario poner etiqueta al if ya que nunca volvemos a él
+		// out("if"+ labelCounter + ":");
+
+		out("jz else" + localLabel);
 
 		if (node.getIfSentences() != null)
 			for (Sentence child : node.getIfSentences())
 				child.accept(this, CodeFunction.VALUE);
-		
-		out("jmp fin_else"+localLabel);
-		out("else"+ localLabel + ":");
+
+		out("jmp fin_else" + localLabel);
+		out("else" + localLabel + ":");
 
 		if (node.getElseSentences() != null)
 			for (Sentence child : node.getElseSentences())
 				child.accept(this, CodeFunction.VALUE);
 
-        out("fin_else"+ localLabel + ":");
-        
+		out("fin_else" + localLabel + ":");
+
 		return null;
 	}
-	
+
 //	class While { Expression condition;  List<Sentence> whileSentences; }
 	public Object visit(While node, Object param) {
 
 		// super.visit(node, param);
 		line(node);
 
-		//para que no se mezcle con los otros labels
+		// para que no se mezcle con los otros labels
 		int localLabel = labelCounter++;
-		
-		out("while"+ localLabel + ":"); 
-		
+
+		out("while" + localLabel + ":");
+
 		if (node.getCondition() != null)
 			node.getCondition().accept(this, CodeFunction.VALUE);
-		
-		out("jz fin_while"+localLabel);
-		
+
+		out("jz fin_while" + localLabel);
+
 		if (node.getWhileSentences() != null)
 			for (Sentence child : node.getWhileSentences())
 				child.accept(this, param);
 
-		out("jmp while"+localLabel);
-		out("fin_while"+localLabel+":");
-		
+		out("jmp while" + localLabel);
+		out("fin_while" + localLabel + ":");
+
 		return null;
 	}
-	
+
 //	class CallProcedure { String ident;  List<Expression> args; }
 	public Object visit(CallProcedure node, Object param) {
 
@@ -316,12 +342,12 @@ public class CodeSelection extends DefaultVisitor {
 		if (node.getArgs() != null)
 			for (Expression child : node.getArgs())
 				child.accept(this, CodeFunction.VALUE);
-		
+
 		out("call " + node.getIdent());
 		FunctionDef fdef = (FunctionDef) node.getDefinicion();
 		FunctionType ftype = (FunctionType) fdef.getTipo();
-		if(ftype.getRetType()!=null) {
-			out("pop"+ftype.getRetType().getSuffix());
+		if (ftype.getRetType() != null) {
+			out("pop" + ftype.getRetType().getSuffix());
 		}
 
 		return null;
@@ -364,30 +390,30 @@ public class CodeSelection extends DefaultVisitor {
 
 		return null;
 	}
-	
+
 //	class Logic { Expression left;  String op;  Expression right; }
 	public Object visit(Logic node, Object param) {
 
 		// super.visit(node, param);
-		
+
 		assert (param == CodeFunction.VALUE);
 
 		if (node.getLeft() != null)
-			node.getLeft().accept(this, param);
+			node.getLeft().accept(this, CodeFunction.VALUE); //tengo que pasar el valor?
 
 		if (node.getRight() != null)
-			node.getRight().accept(this, param);
-		
+			node.getRight().accept(this, CodeFunction.VALUE);
+
 		out(instruccion.get(node.getOp()));
 
 		return null;
 	}
 
-	//	class Comparison { Expression left;  String op;  Expression right; }
+	// class Comparison { Expression left; String op; Expression right; }
 	public Object visit(Comparison node, Object param) {
 
 		// super.visit(node, param);
-		
+
 		assert (param == CodeFunction.VALUE);
 
 		if (node.getLeft() != null)
@@ -395,7 +421,7 @@ public class CodeSelection extends DefaultVisitor {
 
 		if (node.getRight() != null)
 			node.getRight().accept(this, param);
-		
+
 		out(instruccion.get(node.getOp()), node.getLeft().getType());
 
 		return null;
@@ -420,7 +446,48 @@ public class CodeSelection extends DefaultVisitor {
 		}
 		return null;
 	}
-	
+
+//	class UnaryMinus { Expression expr; }
+	public Object visit(UnaryMinus node, Object param) {
+
+		// super.visit(node, param);
+
+		if (node.getExpr() != null)
+			node.getExpr().accept(this, CodeFunction.VALUE);
+
+		out("push" + node.getType().getSuffix() + " -1");
+		out("mul" + node.getType().getSuffix());
+
+		return null;
+	}
+
+//	class FieldAccess { Expression ident;  String fieldName; }
+	public Object visit(FieldAccess node, Object param) {
+
+		// super.visit(node, param);
+
+		if (((CodeFunction) param) == CodeFunction.VALUE) {
+			// ponemos el address del field access encima de la pila y cargamos el valor
+			visit(node, CodeFunction.ADDRESS);
+			out("load", node.getType());
+		} else { // Funcion.DIRECCION
+			assert (param == CodeFunction.ADDRESS);
+
+			// ponemos en la cima de la pila la dirección de nuestra variable struct
+			if (node.getIdent() != null)
+				node.getIdent().accept(this, CodeFunction.ADDRESS);
+
+			// bytes de desplazamiento de nuestro campo
+			StructType strType = (StructType) node.getIdent().getType();
+			RecordDef rdef = strType.getRecordByName(node.getFieldName());
+			int desplazamiento = rdef.getAddress();
+			out("push " + desplazamiento);
+			// los sumamos para obtener el address total
+			out("add");
+		}
+		return null;
+	}
+
 //	class CallFunction { String ident;  List<Expression> arguments; }
 	public Object visit(CallFunction node, Object param) {
 
@@ -430,39 +497,11 @@ public class CodeSelection extends DefaultVisitor {
 			for (Expression child : node.getArguments())
 				child.accept(this, CodeFunction.VALUE);
 
-		out("call " + node.getIdent() );
-		
+		out("call " + node.getIdent());
+
 		return null;
 	}
-	
-//	class UnaryMinus { Expression expr; }
-	public Object visit(UnaryMinus node, Object param) {
 
-		// super.visit(node, param);
-
-		if (node.getExpr() != null)
-			node.getExpr().accept(this, CodeFunction.VALUE);
-
-		out("push"+ node.getType().getSuffix() + " -1");
-		out("mul" + node.getType().getSuffix());
-		
-		return null;
-	}
-	
-	
-//	class FieldAccess { Expression ident;  String fieldName; }
-	public Object visit(FieldAccess node, Object param) {
-
-		// super.visit(node, param);
-
-		if (node.getIdent() != null)
-			node.getIdent().accept(this, CodeFunction.ADDRESS);
-
-		out("load" + node.getType());
-		
-		return null;
-	}
-	
 //	class Indexing { Expression ident;  Expression index; }
 	public Object visit(Indexing node, Object param) {
 
@@ -474,15 +513,45 @@ public class CodeSelection extends DefaultVisitor {
 		if (node.getIndex() != null)
 			node.getIndex().accept(this, CodeFunction.VALUE);
 
-		//multiplico el valor del index por el tipo del array para tener su numero de bytes
+		// multiplico el valor del index por el tipo del array para tener su numero de
+		// bytes
 		out("pushi " + node.getType().getSize());
-        out("muli");
-        //lo sumo a la address para obtener el valor final
-        out("addi");
-        
-        if(param == CodeFunction.VALUE) {
-        	out("load", node.getType());
-        }
+		out("muli");
+		// lo sumo a la address para obtener el valor final
+		out("addi");
+
+		if (param == CodeFunction.VALUE) {
+			out("load", node.getType());
+		}
+
+		return null;
+	}
+
+//	class Cast { Type castType;  Expression expr; }
+	public Object visit(Cast node, Object param) {
+
+		// super.visit(node, param);
+
+		if (node.getCastType() != null)
+			node.getCastType().accept(this, param);
+
+		if (node.getExpr() != null)
+			node.getExpr().accept(this, param);
+
+		out(node.getExpr().getType().getSuffix() + "2" + node.getCastType().getSuffix());
+
+		return null;
+	}
+
+//	class Not { Expression expr; }
+	public Object visit(Not node, Object param) {
+
+		// super.visit(node, param);
+
+		if (node.getExpr() != null)
+			node.getExpr().accept(this, param);
+
+		out("not");
 
 		return null;
 	}
@@ -490,7 +559,10 @@ public class CodeSelection extends DefaultVisitor {
 	// class CharConstant { String valor; }
 	public Object visit(CharConstant node, Object param) {
 		assert (param == CodeFunction.VALUE);
-		out("pushb " + node.getValue());
+		//System.out.println(node.getValue());
+		int value = (int) node.getValue();
+		//System.out.println(value);
+		out("pushb " + value);
 		return null;
 	}
 

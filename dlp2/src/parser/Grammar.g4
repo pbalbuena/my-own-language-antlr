@@ -33,9 +33,9 @@ param returns[Definition ast]
 ;
 
 sentence returns[Sentence ast]
-: 'print' expr? ';' { $ast = new Print($ctx.expr != null ? $expr.ast: null); }
-| 'printsp' expr? ';' { $ast = new Print($ctx.expr != null ? $expr.ast: null); }
-| 'println' expr? ';' { $ast = new Print($ctx.expr != null ? $expr.ast: null); }
+: 'print' expr? ';' { $ast = new Print($ctx.expr != null ? $expr.ast: null, 1); }
+| 'printsp' expr? ';' { $ast = new Print($ctx.expr != null ? $expr.ast: null, 2); }
+| 'println' expr? ';' { $ast = new Print($ctx.expr != null ? $expr.ast: null, 3); }
 | 'read' expr ';' { $ast = new Read($expr.ast); }
 | l=expr '=' r=expr ';' { $ast = new Assignment($l.ast, $r.ast); }
 | 'while' '(' expr ')' '{' opt_sentences '}' { $ast = new While($expr.ast, $opt_sentences.list); }
@@ -84,13 +84,13 @@ expr returns[Expression ast]
 | '<' tipo_simple '>' expr { $ast = new Cast($tipo_simple.ast, $expr.ast); }
 | minus='-' expr { $ast = new UnaryMinus($expr.ast); }
 | not='!' expr { $ast = new Not($expr.ast); }
-| l=expr op=('+' | '-') r=expr { $ast = new Arithmetic($l.ast, $op, $r.ast); }
 | l=expr op=('*' | '/') r=expr { $ast = new Arithmetic($l.ast, $op, $r.ast); }
+| l=expr op=('+' | '-') r=expr { $ast = new Arithmetic($l.ast, $op, $r.ast); }
 | l=expr op=('>'|'<'|'=='|'>='|'<='|'!=') r=expr { $ast = new Comparison($l.ast, $op, $r.ast); }
 | l=expr op=('&&'|'||') r=expr { $ast = new Logic($l.ast, $op, $r.ast); }
 | IDENT '(' opt_exprs ')' {$ast = new CallFunction($IDENT, $opt_exprs.list);}
 | IDENT { $ast = new Variable($IDENT); }
-| CHAR_CONSTANT { $ast = new CharConstant($CHAR_CONSTANT); }
+| CHAR_CONSTANT { $ast = new CharConstant(($CHAR_CONSTANT.text).charAt(1)); }
 | INT_CONSTANT { $ast = new IntConstant($INT_CONSTANT); }
 | REAL_CONSTANT { $ast = new RealConstant($REAL_CONSTANT); }
 ;

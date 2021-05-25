@@ -156,8 +156,9 @@ public class TypeChecking extends DefaultVisitor {
 		if (node.getExpression() != null)
 			node.getExpression().accept(this, param);
 		
-		predicado(esPrimitivo(node.getExpression().getType()), "PRINT: La expresión debe ser un tipo simple", node);	
-
+		if (node.getExpression()!= null) {
+			predicado(esPrimitivo(node.getExpression().getType()), "PRINT: La expresión debe ser un tipo simple", node);	
+		}
 		return null;
 	}
 	
@@ -336,6 +337,7 @@ public class TypeChecking extends DefaultVisitor {
 			StructType st = (StructType) node.getIdent().getType();
 			StructDef sdef = (StructDef) st.getDefinicion();
 			Type tipoField = dot(node.getFieldName(), sdef);
+			node.setModificable(true);
 			if(tipoField!=null) {
 				node.setType(tipoField);
 			} else {

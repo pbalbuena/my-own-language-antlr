@@ -26,8 +26,14 @@ public class CharType extends AbstractType {
 		return 1;
 	}
 
-
+	@Override
+	public String getMAPLName() {
+		return "char";
+	}
 	
-	
+	@Override
+	public char getSuffix() {
+		return 'b';
+	}
 	
 }

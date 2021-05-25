@@ -1,9 +1,6 @@
 lexer grammar Lexicon
 	;
 
-DATA:	'DATA';
-CODE:	'CODE';
-
 PRINT: 'print';
 
 INT:	'int';

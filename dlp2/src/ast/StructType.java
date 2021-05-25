@@ -48,7 +48,7 @@ public class StructType extends AbstractType {
 	
 	@Override
 	public String getMAPLName() {
-		return "type";
+		return name;
 	}
 
 	@Override
@@ -60,5 +60,16 @@ public class StructType extends AbstractType {
 			valor += rdef.getTipo().getSize();
 		}
 		return valor;
+	}
+	
+	public RecordDef getRecordByName( String nombre ) {
+		StructDef sdef = (StructDef) definicion;
+		for(Definition d : sdef.getRecords()) {	
+			RecordDef rdef = (RecordDef) d;
+			if(nombre.equals(rdef.getName())) {
+				return rdef;
+			}	
+		}
+		return null;
 	}
 }
